@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School Schedule</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="/_sdk/element_sdk.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+* { font-family: 'Outfit', sans-serif; }
+.day-btn.active {
+transform: scale(1.05);
+box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+}
+.class-card {
+animation: slideIn 0.3s ease-out forwards;
+opacity: 0;
+}
+@keyframes slideIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+.class-card:nth-child(1) { animation-delay: 0.05s; }
+.class-card:nth-child(2) { animation-delay: 0.1s; }
+.class-card:nth-child(3) { animation-delay: 0.15s; }
+.class-card:nth-child(4) { animation-delay: 0.2s; }
+.class-card:nth-child(5) { animation-delay: 0.25s; }
+.class-card:nth-child(6) { animation-delay: 0.3s; }
+.class-card:nth-child(7) { animation-delay: 0.35s; }
+.class-card.current-class {
+background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%);
+border-color: rgba(34, 197, 94, 0.5);
+box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+}
+.current-class .current-badge {
+color: #86efac;
+font-weight: 600;
+}
+</style>
+<style>body { box-sizing: border-box; }</style>
+<script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+</head>
+<body class="h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 overflow-auto">
+<div class="min-h-full w-full p-4 md:p-8">
+<div class="max-w-2xl mx-auto"><!-- Header -->
+<header class="text-center mb-6">
+<div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-4"><span class="text-2xl">📚</span> <span id="school-name" class="text-white/90 font-medium">Lincoln High School</span>
+</div>
+<h1 class="text-3xl md:text-4xl font-bold text-white mb-2"><span id="student-name">Your</span> Schedule</h1>
+<p id="current-date" class="text-indigo-200 text-lg"></p>
+</header><!-- Day Selector -->
+<div class="flex flex-wrap justify-center gap-2 mb-6"><button class="day-btn px-4 py-2 rounded-xl font-medium transition-all duration-200 bg-white/10 text-white hover:bg-white/20" data-day="0">Sun</button> <button class="day-btn px-4 py-2 rounded-xl font-medium transition-all duration-200 bg-white/10 text-white hover:bg-white/20" data-day="1">Mon</button> <button class="day-btn px-4 py-2 rounded-xl font-medium transition-all duration-200 bg-white/10 text-white hover:bg-white/20" data-day="2">Tue</button> <button class="day-btn px-4 py-2 rounded-xl font-medium transition-all duration-200 bg-white/10 text-white hover:bg-white/20" data-day="3">Wed</button> <button class="day-btn px-4 py-2 rounded-xl font-medium transition-all duration-200 bg-white/10 text-white hover:bg-white/20" data-day="4">Thu</button> <button class="day-btn px-4 py-2 rounded-xl font-medium transition-all duration-200 bg-white/10 text-white hover:bg-white/20" data-day="5">Fri</button> <button class="day-btn px-4 py-2 rounded-xl font-medium transition-all duration-200 bg-white/10 text-white hover:bg-white/20" data-day="6">Sat</button>
+</div><!-- Schedule Container -->
+<div id="schedule-container" class="space-y-3"><!-- Classes will be rendered here -->
+</div><!-- No Classes Message -->
+<div id="no-classes" class="hidden text-center py-12">
+<div class="text-6xl mb-4">
+🎉
+</div>
+<h2 class="text-2xl font-bold text-white mb-2">No Classes Today!</h2>
+<p class="text-indigo-200">Enjoy your day off!</p>
+</div>
+</div>
+</div>
+<script>
+const defaultConfig = {
+school_name: "St.B Middle School",
+student_name: "Your",
+primary_color: "#6366f1",
+secondary_color: "#1e1b4b",
+text_color: "#ffffff",
+accent_color: "#a5b4fc",
+card_color: "#312e81"
+};
+
+// Your actual schedule
+const scheduleData = {
+1: [ // Monday
+{ time: "8:27 AM", endTime: "9:15 AM", subject: "Science 6 - 6Acc (1st)", teacher: "Stephanie Whitman", room: "Middle School 7", icon: "🔬" },
+{ time: "9:19 AM", endTime: "10:07 AM", subject: "English 6 - 6Acc (2nd)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "📖" },
+{ time: "11:03 AM", endTime: "11:46 AM", subject: "Lunch/Recess - Purple Crew", teacher: "Elyse Ashwood", room: "Harwood", icon: "🍽️" },
+{ time: "11:50 AM", endTime: "12:38 PM", subject: "Math 6 - 6Acc (4th)", teacher: "Abby Benito", room: "Harwood 10", icon: "📐" },
+{ time: "12:42 PM", endTime: "1:30 PM", subject: "Spanish 6 - 6Acc (5th)", teacher: "Lourdes Helfrich", room: "04 21", icon: "🌎" },
+{ time: "1:34 PM", endTime: "2:22 PM", subject: "History 6 - 6Acc (6th)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "🏛️" },
+{ time: "2:26 PM", endTime: "3:12 PM", subject: "Ukulele 6 - 6Acc (7th)", teacher: "Rachel Nunez", room: "Church 12", icon: "🎸" },
+{ time: "3:15 PM", endTime: "3:30 PM", subject: "Dismissal - Purple Crew (Boys)", teacher: "Elyse Ashwood", room: "Middle School 1", icon: "🏫" }
+],
+2: [ // Tuesday
+{ time: "8:27 AM", endTime: "9:15 AM", subject: "English 6 - 6Acc (2nd)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "📖" },
+{ time: "9:19 AM", endTime: "10:07 AM", subject: "Math 6 - 6Acc (4th)", teacher: "Abby Benito", room: "Harwood 10", icon: "📐" },
+{ time: "10:11 AM", endTime: "10:59 AM", subject: "Science Lab 6 - 6Acc (3rd)", teacher: "Stephanie Whitman", room: "Middle School 1", icon: "🧪" },
+{ time: "11:03 AM", endTime: "11:46 AM", subject: "Lunch/Recess - Purple Crew", teacher: "Elyse Ashwood", room: "Harwood", icon: "🍽️" },
+{ time: "11:50 AM", endTime: "12:38 PM", subject: "Science 6 - 6Acc (1st)", teacher: "Stephanie Whitman", room: "Middle School 7", icon: "🔬" },
+{ time: "12:42 PM", endTime: "1:30 PM", subject: "Book Club 6 - 6Acc (5th)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "📚" },
+{ time: "1:34 PM", endTime: "2:22 PM", subject: "History 6 - 6Acc (6th)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "🏛️" },
+{ time: "2:26 PM", endTime: "3:12 PM", subject: "Art 6 - 6Acc (7th)", teacher: "Melissa Luedeke", room: "Middle School 3", icon: "🎨" }
+],
+3: [ // Wednesday
+{ time: "8:27 AM", endTime: "9:15 AM", subject: "Science 6 - 6Acc (1st)", teacher: "Stephanie Whitman", room: "Middle School 7", icon: "🔬" },
+{ time: "9:19 AM", endTime: "10:07 AM", subject: "English 6 - 6Acc (2nd)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "📖" },
+{ time: "11:03 AM", endTime: "11:46 AM", subject: "Lunch/Recess - Purple Crew", teacher: "Elyse Ashwood", room: "Harwood", icon: "🍽️" },
+{ time: "11:50 AM", endTime: "12:38 PM", subject: "Christian Education 6 - 6Acc (4th)", teacher: "Daniel Ambrose", room: "02 Ministry", icon: "✝️" },
+{ time: "12:42 PM", endTime: "1:30 PM", subject: "Math 6 - 6Acc (4th)", teacher: "Abby Benito", room: "Harwood 10", icon: "📐" },
+{ time: "1:34 PM", endTime: "2:22 PM", subject: "History 6 - 6Acc (6th)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "🏛️" },
+{ time: "2:26 PM", endTime: "3:12 PM", subject: "Music 6 - 6Acc (7th)", teacher: "Rachel Nunez", room: "Church 12", icon: "🎵" },
+{ time: "3:15 PM", endTime: "3:30 PM", subject: "Dismissal - Purple Crew (Boys)", teacher: "Elyse Ashwood", room: "Middle School 1", icon: "🏫" }
+],
+4: [ // Thursday
+{ time: "8:27 AM", endTime: "9:15 AM", subject: "English 6 - 6Acc (2nd)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "📖" },
+{ time: "9:19 AM", endTime: "10:07 AM", subject: "Math 6 - 6Acc (4th)", teacher: "Abby Benito", room: "Harwood 10", icon: "📐" },
+{ time: "10:11 AM", endTime: "10:59 AM", subject: "Physical Education 6 - 6Acc (3rd)", teacher: "Julie-Ann Maheu", room: "Middle School Outside", icon: "🏃" },
+{ time: "11:03 AM", endTime: "11:46 AM", subject: "Lunch/Recess - Purple Crew", teacher: "Elyse Ashwood", room: "Harwood", icon: "🍽️" },
+{ time: "11:50 AM", endTime: "12:38 PM", subject: "Science 6 - 6Acc (1st)", teacher: "Stephanie Whitman", room: "Middle School 7", icon: "🔬" },
+{ time: "12:42 PM", endTime: "1:30 PM", subject: "Writer's Workshop 6 - 6Acc (5th)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "✏️" },
+{ time: "1:34 PM", endTime: "2:22 PM", subject: "History 6 - 6Acc (6th)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "🏛️" },
+{ time: "2:26 PM", endTime: "3:12 PM", subject: "Computer 6 - 6Acc (7th)", teacher: "Andrew Fick", room: "Middle School 4", icon: "💻" },
+{ time: "3:15 PM", endTime: "3:30 PM", subject: "Dismissal - Purple Crew (Boys)", teacher: "Elyse Ashwood", room: "Middle School 1", icon: "🏫" }
+],
+5: [ // Friday
+{ time: "8:27 AM", endTime: "9:15 AM", subject: "Science 6 - 6Acc (1st)", teacher: "Stephanie Whitman", room: "Middle School 7", icon: "🔬" },
+{ time: "9:19 AM", endTime: "10:07 AM", subject: "English 6 - 6Acc (2nd)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "📖" },
+{ time: "10:11 AM", endTime: "10:59 AM", subject: "House Time - Crew Purple Crew", teacher: "Elyse Ashwood", room: "Harwood", icon: "🏠" },
+{ time: "11:03 AM", endTime: "11:46 AM", subject: "Lunch/Recess - Purple Crew", teacher: "Elyse Ashwood", room: "Harwood", icon: "🍽️" },
+{ time: "11:50 AM", endTime: "12:38 PM", subject: "Math 6 - 6Acc (4th)", teacher: "Abby Benito", room: "Harwood 10", icon: "📐" },
+{ time: "12:42 PM", endTime: "1:30 PM", subject: "Spanish 6 - 6Acc (5th)", teacher: "Lourdes Helfrich", room: "04 21", icon: "🌎" },
+{ time: "1:34 PM", endTime: "2:22 PM", subject: "History 6 - 6Acc (6th)", teacher: "Teresa Umberger", room: "Middle School 6", icon: "🏛️" },
+{ time: "2:26 PM", endTime: "3:12 PM", subject: "Physical Education 6 - 6Acc (3rd)", teacher: "Julie-Ann Maheu", room: "Middle School Outside", icon: "🏃" },
+{ time: "3:15 PM", endTime: "3:30 PM", subject: "Dismissal - Purple Crew (Boys)", teacher: "Elyse Ashwood", room: "Middle School 1", icon: "🏫" }
+],
+0: [], // Sunday
+6: [] // Saturday
+};
+
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+let selectedDay = new Date().getDay();
+
+function parseTime(timeStr) {
+if (!timeStr || typeof timeStr !== 'string') return null;
+const match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+if (!match) return null;
+
+let hours = parseInt(match[1]);
+const minutes = parseInt(match[2]);
+const period = match[3].toUpperCase();
+
+if (period === 'PM' && hours !== 12) hours += 12;
+if (period === 'AM' && hours === 12) hours = 0;
+
+return hours * 60 + minutes;
+}
+
+function renderSchedule(day) {
+const container = document.getElementById('schedule-container');
+const noClasses = document.getElementById('no-classes');
+const classes = scheduleData[day] || [];
+
+container.innerHTML = '';
+
+if (classes.length === 0) {
+container.classList.add('hidden');
+noClasses.classList.remove('hidden');
+return;
+}
+
+container.classList.remove('hidden');
+noClasses.classList.add('hidden');
+
+const now = new Date();
+const currentTime = now.getHours() * 60 + now.getMinutes();
+const isToday = now.getDay() === day;
+
+classes.forEach((cls) => {
+const card = document.createElement('div');
+card.className = 'class-card bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/10 hover:bg-white/15 transition-all duration-200';
+
+let isCurrentClass = false;
+if (isToday) {
+const classStartTime = parseTime(cls.time);
+const classEndTime = parseTime(cls.endTime);
+
+if (classStartTime !== null && classEndTime !== null && currentTime >= classStartTime && currentTime < classEndTime) {
+isCurrentClass = true;
+card.classList.add('current-class');
+}
+}
+
+card.innerHTML = `
+<div class="flex items-start gap-4">
+<div class="text-3xl flex-shrink-0 w-12 h-12 flex items-center justify-center bg-white/10 rounded-xl">
+${cls.icon}
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+<h3 class="text-lg font-semibold text-white">${cls.subject}</h3>
+<span class="text-indigo-200 text-sm font-medium bg-indigo-500/30 px-3 py-1 rounded-full">
+${cls.time} - ${cls.endTime}
+</span>
+</div>
+${isCurrentClass ? '<div class="text-xs font-bold text-green-300 mb-2 current-badge">🔴 NOW</div>' : ''}
+<div class="flex flex-wrap gap-x-4 gap-y-1 text-indigo-200 text-sm">
+${cls.room ? `<span class="flex items-center gap-1"><span>📍</span> ${cls.room}</span>` : ''}
+${cls.teacher ? `<span class="flex items-center gap-1"><span>👤</span> ${cls.teacher}</span>` : ''}
+</div>
+</div>
+</div>
+`;
+
+container.appendChild(card);
+});
+}
+
+function updateDayButtons(day) {
+document.querySelectorAll('.day-btn').forEach(btn => {
+const btnDay = parseInt(btn.dataset.day);
+if (btnDay === day) {
+btn.classList.add('active', 'bg-indigo-500');
+btn.classList.remove('bg-white/10');
+} else {
+btn.classList.remove('active', 'bg-indigo-500');
+btn.classList.add('bg-white/10');
+}
+});
+}
+
+function updateCurrentDate() {
+const now = new Date();
+const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+}
+
+function selectDay(day) {
+selectedDay = day;
+updateDayButtons(day);
+renderSchedule(day);
+}
+
+// Initialize day button click handlers
+document.querySelectorAll('.day-btn').forEach(btn => {
+btn.addEventListener('click', () => {
+selectDay(parseInt(btn.dataset.day));
+});
+});
+
+// Initialize
+updateCurrentDate();
+selectDay(selectedDay);
+
+// Element SDK initialization
+if (window.elementSdk) {
+window.elementSdk.init({
+defaultConfig,
+onConfigChange: async (config) => {
+const schoolName = config.school_name || defaultConfig.school_name;
+const studentName = config.student_name || defaultConfig.student_name;
+const primaryColor = config.primary_color || defaultConfig.primary_color;
+const textColor = config.text_color || defaultConfig.text_color;
+
+document.getElementById('school-name').textContent = schoolName;
+document.getElementById('student-name').textContent = studentName;
+
+// Update active button color
+document.querySelectorAll('.day-btn.active').forEach(btn => {
+btn.style.backgroundColor = primaryColor;
+});
+},
+mapToCapabilities: (config) => ({
+recolorables: [
+{
+get: () => config.primary_color || defaultConfig.primary_color,
+set: (value) => { config.primary_color = value; window.elementSdk.setConfig({ primary_color: value }); }
+},
+{
+get: () => config.secondary_color || defaultConfig.secondary_color,
+set: (value) => { config.secondary_color = value; window.elementSdk.setConfig({ secondary_color: value }); }
+},
+{
+get: () => config.text_color || defaultConfig.text_color,
+set: (value) => { config.text_color = value; window.elementSdk.setConfig({ text_color: value }); }
+},
+{
+get: () => config.accent_color || defaultConfig.accent_color,
+set: (value) => { config.accent_color = value; window.elementSdk.setConfig({ accent_color: value }); }
+},
+{
+get: () => config.card_color || defaultConfig.card_color,
+set: (value) => { config.card_color = value; window.elementSdk.setConfig({ card_color: value }); }
+}
+],
+borderables: [],
+fontEditable: undefined,
+fontSizeable: undefined
+}),
+mapToEditPanelValues: (config) => new Map([
+["school_name", config.school_name || defaultConfig.school_name],
+["student_name", config.student_name || defaultConfig.student_name]
+])
+});
+}
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9d7bbe4e847bb887',t:'MTc3Mjc0MTIwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
